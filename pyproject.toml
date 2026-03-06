@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "hplc-peak-integration"
+version = "0.1.0"
+description = "Reusable HPLC peak detection and integration for headerless TXT traces"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+  "numpy",
+  "pandas",
+  "matplotlib",
+]
+
+[project.scripts]
+hplc-integrate = "hplc_peak_integration:cli_main"
+
+[tool.setuptools]
+py-modules = ["hplc_peak_integration"]

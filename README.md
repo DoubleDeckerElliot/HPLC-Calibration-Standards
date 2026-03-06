@@ -4,6 +4,7 @@ This repository includes `hplc_peak_integration.py`, a reusable script for HPLC-
 
 ## Features
 - Robust loading with malformed-line handling (`on_bad_lines='skip'`)
+- Encoding fallback support including UTF-16/UTF-8/Latin-1
 - Automatic main-peak detection
 - Area integration via trapezoidal rule **without baseline zeroing**
 - Trace plotting with shaded integrated region

@@ -39,6 +39,9 @@ def load_hplc_trace(file_path: str | Path, min_rows: int = 10) -> pd.DataFrame:
     Assumes comma-separated values with no header and at least two columns:
     x-axis (time) and y-axis (signal). Malformed lines are skipped.
 
+    Supports common text encodings (including UTF-16) by attempting a small
+    sequence of encodings before failing with a clear message.
+
     Parameters
     ----------
     file_path:
@@ -56,17 +59,34 @@ def load_hplc_trace(file_path: str | Path, min_rows: int = 10) -> pd.DataFrame:
     HPLCDataError
         If file cannot be read or cleaned into a valid trace.
     """
-    try:
-        raw = pd.read_csv(
-            file_path,
-            header=None,
-            sep=",",
-            engine="python",
-            on_bad_lines="skip",
-            comment="#",
+    encodings_to_try = ("utf-8", "utf-8-sig", "utf-16", "utf-16-le", "utf-16-be", "latin-1")
+    raw = None
+    read_errors: list[str] = []
+
+    for encoding in encodings_to_try:
+        try:
+            raw = pd.read_csv(
+                file_path,
+                header=None,
+                sep=",",
+                engine="python",
+                on_bad_lines="skip",
+                comment="#",
+                encoding=encoding,
+            )
+            break
+        except UnicodeError as exc:
+            read_errors.append(f"{encoding}: {exc}")
+        except Exception as exc:
+            # Non-encoding exceptions are recorded and we still try the next
+            # encoding to maximize robustness on odd exports.
+            read_errors.append(f"{encoding}: {exc}")
+
+    if raw is None:
+        raise HPLCDataError(
+            f"Unable to read file '{file_path}' with supported encodings. "
+            f"Errors: {' | '.join(read_errors)}"
         )
-    except Exception as exc:
-        raise HPLCDataError(f"Unable to read file '{file_path}': {exc}") from exc
 
     if raw.shape[1] < 2:
         raise HPLCDataError(
